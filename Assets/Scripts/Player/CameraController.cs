@@ -1,0 +1,71 @@
+
+using UnityEngine;
+
+public class CameraController : MonoBehaviour
+{
+    public Transform playerTransform;
+    public float sensitivity = 5f;
+
+    public float minXAngle = -30f;
+    public float maxXAngle = 30f;
+
+    public float minYAngle = -360f;
+    public float maxYAngle = 360f;
+
+    public float smoothSpeed = 10f;
+
+    private float rotationX = 0f;
+    private float rotationY = 0f;
+
+    void Start()
+    {
+        Cursor.lockState = CursorLockMode.Locked;
+        Cursor.visible = false;
+
+        LoadSettings();
+
+        // Initialize rotation from the current camera orientation.
+        Vector3 currentRotation = transform.eulerAngles;
+
+        rotationX = currentRotation.x > 180f
+            ? currentRotation.x - 360f
+            : currentRotation.x;
+
+        rotationY = playerTransform.eulerAngles.y;
+    }
+
+    void Update()
+    {
+        float mouseX = Input.GetAxis("Mouse X") * sensitivity;
+        float mouseY = Input.GetAxis("Mouse Y") * sensitivity;
+
+        rotationX -= mouseY;
+        rotationY += mouseX;
+
+        rotationX = Mathf.Clamp(rotationX, minXAngle, maxXAngle);
+        rotationY = Mathf.Clamp(rotationY, minYAngle, maxYAngle);
+
+        Quaternion targetRotation = Quaternion.Euler(rotationX, rotationY, 0f);
+
+        playerTransform.rotation = Quaternion.Slerp(
+            playerTransform.rotation,
+            targetRotation,
+            smoothSpeed * Time.deltaTime
+        );
+
+        transform.rotation = Quaternion.Slerp(
+            transform.rotation,
+            targetRotation,
+            smoothSpeed * Time.deltaTime
+        );
+    }
+
+    public void LoadSettings()
+    {
+        sensitivity = PlayerPrefs.GetFloat("Sensitivity", 2f);
+        smoothSpeed = PlayerPrefs.GetFloat("SmoothSpeed", 10f);
+
+        Debug.Log("Camera Sensitivity: " + sensitivity);
+        Debug.Log("Camera Smooth Speed: " + smoothSpeed);
+    }
+}
